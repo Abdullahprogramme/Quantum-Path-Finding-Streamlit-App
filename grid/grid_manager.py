@@ -103,6 +103,7 @@ class GridManager:
     
     def is_not_obstacle(self, cell: Cell) -> bool:
         """Checks if a given cell is not an obstacle."""
+        
         row, col = cell
         return self.grid[row][col] != OBSTACLE
     
