@@ -58,3 +58,68 @@ class Encoder:
         
         except ValueError:
             return None
+
+    def index_to_binary(self, index: int) -> Optional[str]:
+        """
+        Encodes an index into its corresponding binary string representation.
+
+        Parameters:
+        index: int - The index to be encoded
+
+        Returns:
+        Optional[str] - The binary string representation of the index or None if the index is invalid
+        """
+
+        if index < 0 or index >= self.grid.total_cells():
+            return None # Invalid index, out of bounds
+        
+        binary_str = format(index, f'0{self.num_qubits}b') # Convert index to binary with leading zeros
+
+        return binary_str
+    
+    def get_num_qubits(self) -> int:
+        """
+        Returns the number of qubits needed to represent all cells in the grid.
+
+        Returns:
+        int - The number of qubits
+        """
+
+        return self.num_qubits
+    
+
+    def get_num_states(self) -> int:
+        """
+        Returns the total number of states that can be represented by the qubits.
+
+        Returns:
+        int - The total number of states
+        """
+
+        return self.num_states
+    
+    def get_valid_states(self) -> List[str]:
+        """
+        Returns a list of valid binary string representations for all cells in the grid.
+
+        Returns:
+        List[str] - A list of valid binary string representations for all cells
+        """
+
+        valid_states = self.grid.get_all_non_obstacle_cells() # Get all non-obstacle cells
+
+        return [self.cell_to_binary(cell) for cell in valid_states] # Convert each cell to its binary representation and return the list
+    
+    def description(self) -> str:
+        """
+        Returns a string description of the encoder, including the number of qubits and states.
+
+        Returns:
+        str - A description of the encoder
+        """
+
+        return (
+            f"Grid {self.n}x{self.n} = {self.grid.total_cells()} cells -> "
+            f"{self.num_qubits} qubits -> {self.num_states} quantum states "
+            f"({self.num_states - self.grid.total_cells()} states unused)"
+        )
