@@ -26,3 +26,39 @@ class GroversSearch:
 
         return self.path is not None
     
+    def _oracle_builder(num_qubits: int, target_state: str) -> QuantumCircuit:
+        """
+        Builds the oracle for Grover's algorithm that marks the target state.
+
+        How it works:
+        1. Apply X gates to the qubits corresponding to '0' bits in the target state to flip them (X gate).
+        2. Apply a multi-controlled Z (phase flip) gate.
+        3. Apply X gates again to revert the qubits back to their original state.
+
+        Parameters:
+        num_qubits: int - The total number of qubits in the circuit
+        target_state: str - The binary string representation of the target state (cell) to be marked by the oracle
+
+        Returns:
+        QuantumCircuit - The constructed oracle as a quantum circuit
+        """
+        
+        oracle = QuantumCircuit(num_qubits, name='Oracle')
+
+        for i, bit in enumerate(reversed(target_state)):
+            if bit == '0':
+                oracle.x(i) # Flip qubits corresponding to '0' bits in the target state
+
+        # Apply multi-controlled Z gate to all qubits to mark the target state
+        if num_qubits == 1:
+            oracle.z(0) # For 1 qubit, just apply Z gate to the single qubit
+        else:
+            oracle.h(num_qubits - 1) # Prepare the last qubit for multi-controlled Z
+            oracle.mcx( list( range(num_qubits - 1) ), num_qubits - 1 ) # Multi-controlled (Z) gate
+            oracle.h(num_qubits - 1) # Revert the last qubit back
+
+        for i, bit in enumerate(reversed(target_state)):
+            if bit == '0':
+                oracle.x(i) # Revert the qubits back to their original state
+
+        return oracle
