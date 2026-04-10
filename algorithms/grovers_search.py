@@ -2,6 +2,7 @@ import time
 import math
 from typing import Optional, Tuple, List, Dict
 from collections import deque
+import numpy as np
 
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit_aer import AerSimulator
@@ -136,4 +137,126 @@ class GroversSearch:
 
         return None # Return None if no path exists from start to target
     
+def grovers_search(grid_manager: GridManager, encoder: Encoder) -> GroversSearch:
+    """
+    Executes Grover's search algorithm to find a path from the start cell to the target cell in the grid.
+
+    The steps are as follows:
+    1. Determine the number of qubits needed to represent all cells in the grid.
+    2. Encode the target cell as a binary string to be used in the oracle.
+    3. Build the oracle that marks the target state.
+    The oracle is |0> -> Hadamard -> [oracle + diffusion] x K -> Measure
+    4. Simulate the quantum circuit and measure the output to find the most likely state (cell).
+    5. Extract the probabilities of each state from the simulation results.
+    6. Decode the highest probability state back to a cell.
+    7. Reconstruct the path from the start cell to the target cell using a breadth-first search (BFS) for path reconstruction.
     
+
+    Parameters:
+    grid_manager: GridManager - The grid manager that provides access to the grid and its properties
+    encoder: Encoder - The encoder that converts cells to binary strings and vice versa
+
+    Returns:
+    GroversSearch - An object containing the results of the search, including the path found, nodes explored, time taken, and other relevant information
+    """
+
+    start = grid_manager.start
+    target = grid_manager.target
+
+    time_start = time.time() # Start the timer to measure execution time
+
+    # Step 1: Determine the number of qubits needed to represent all cells in the grid
+    num_cells = grid_manager.total_cells()
+    num_qubits = max( 1, math.ceil(math.log2(num_cells)) ) # Calculate the number of qubits needed, ensuring at least 1 qubit
+    num_states = 2 ** num_qubits # Total number of states that can be represented with the given number of qubits
+
+    # Step 2: Encode the target cell as a binary string to be used in the oracle
+    target_index = grid_manager.cell_index(target) # Get the index of the target cell in the grid
+    target_state = format(target_index, f'0{num_qubits}b') # Convert the target index to a binary string with leading zeros
+
+    # Step 3: Build the oracle that marks the target state
+    number_of_iterations = max( 1, math.ceil(math.pi / 4 * math.sqrt(num_states)) )# Calculate the optimal number of iterations for Grover's algorithm
+
+    # Build the quantum circuit for Grover's algorithm
+    qr = QuantumRegister(num_qubits, name='q') # Create a quantum register with the required number of qubits
+    cr = ClassicalRegister(num_qubits, name='c') # Create a classical register for measurement
+    circuit = QuantumCircuit(qr, cr) # Create a quantum circuit with the quantum and
+
+    circuit.h(range(num_qubits)) # Apply Hadamard gates to all qubits to create a superposition of all states
+    circuit.barrier() # Add a barrier for better visualization  
+
+    # Build the oracle and diffusion operator
+    oracle = GroversSearch._oracle_builder(num_qubits, target_state) # Build the oracle to mark the target state
+    diffusion = GroversSearch._diffusion_operator(num_qubits) # Build the diffusion operator to amplify the marked state
+
+    for iter in range(number_of_iterations):
+        circuit.append(oracle.to_gate(), range(num_qubits)) # Append the oracle to the circuit
+        circuit.append(diffusion.to_gate(), range(num_qubits)) # Append the diffusion operator to
+
+        if iter < number_of_iterations - 1:
+            circuit.barrier() # Add a barrier between iterations for better visualization
+    
+    circuit.barrier() # Add a barrier before measurement
+    circuit.measure(qr, cr) # Measure the quantum register into the classical register
+
+    circuit_diagram = circuit.copy() # Copy the circuit for visualization purposes
+
+    # Step 5: Simulate the quantum circuit and measure the output to find the most likely state (cell)
+    
+    qc_no_measure = QuantumCircuit(num_qubits) # Create a copy of the circuit without measurement for statevector simulation
+    qc_no_measure.h(range(num_qubits)) # Apply Hadamard gates to all qubits
+    for iter in range(number_of_iterations):
+        qc_no_measure.append(oracle.to_gate(), range(num_qubits)) # Append the oracle to the circuit
+        qc_no_measure.append(diffusion.to_gate(), range(num_qubits)) # Append the diffusion operator
+
+    simulator = AerSimulator(method='statevector') # Use the statevector simulator to get the final state of the quantum circuit
+    qc_simulator = qc_no_measure.copy() # Copy the circuit without measurement for simulation
+    qc_simulator.save_statevector() # Save the statevector at the end of the circuit
+
+    sv_job    = simulator.run(qc_simulator)
+    sv_result = sv_job.result()
+    state_vector  = np.asarray(sv_result.get_statevector(qc_simulator)) # Get the final statevector from the simulation
+
+    # Compute probabilities for all basis states
+    probabilities: Dict[str, float] = {}
+    for idx in range(num_states):
+        basis_string = format(idx, f'0{num_qubits}b')
+        probabilities[basis_string] = float(abs( math.pow(state_vector[idx], 2) )) # Calculate the probability of each basis state from the statevector
+ 
+    # Run measurement circuit to get the most likely outcome
+    shot_simulator = AerSimulator().run(circuit, shots = 1024)
+    counts = shot_simulator.result().get_counts(circuit)
+
+    found_state = max(counts, key = counts.get) # Get the state with the highest count (most likely state)
+    found_index = int(found_state, 2) # Convert the found state from binary string to integer index
+
+    # Step 6: Decode the highest probability state back to a cell
+
+    if found_index < num_cells:
+        decoded_cell = grid_manager.index_to_cell(found_index)
+
+        if grid_manager.is_not_obstacle(decoded_cell):
+            quantum_goal = decoded_cell
+        else:
+            quantum_goal = target   # fallback to actual target if decode lands on obstacle
+    else:
+        quantum_goal = target       # fallback if index out of range
+
+    # Step 7: Reconstruct the path from the start cell to the target cell using a breadth-first search (BFS) for path reconstruction
+
+    path = GroversSearch._bfs_path(grid_manager, start, quantum_goal)
+    nodes_explored = number_of_iterations
+
+    time_end = time.time() # End the timer
+    time_taken = time_end - time_start # Calculate the total time taken for the search
+
+    return GroversSearch(
+        path = path,
+        nodes_explored = nodes_explored,
+        time_taken = time_taken,
+        num_qubits = num_qubits,
+        num_iterations = number_of_iterations,
+        probabilities = probabilities,
+        found_state = found_state,
+        circuit_diagram = circuit_diagram
+    )
