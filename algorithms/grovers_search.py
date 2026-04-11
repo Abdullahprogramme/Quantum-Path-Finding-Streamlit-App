@@ -260,3 +260,42 @@ def grovers_search(grid_manager: GridManager, encoder: Encoder) -> GroversSearch
         found_state = found_state,
         circuit_diagram = circuit_diagram
     )
+
+def convergence(num_qubits: int, target_state: str) -> List[Tuple[int, float]]:
+    """
+    Analyzes the convergence of Grover's algorithm by calculating the probability of finding the target state after each iteration.
+
+    Parameters:
+    num_qubits: int - The total number of qubits in the circuit
+    target_state: str - The binary string representation of the target state (cell) to be marked by the oracle
+
+    Returns:
+    List[Tuple[int, float]] - A list of tuples where each tuple contains the iteration number and the corresponding probability of finding the target state
+    """
+
+    num_states = 2 ** num_qubits # Total number of states that can be represented with the given number of qubits
+    max_iter = max( 1, math.floor(math.pi / 4 * math.sqrt(num_states)) ) + 3 # Calculate the optimal number of iterations for Grover's algorithm
+
+    oracle = GroversSearch._oracle_builder(num_qubits, target_state) # Build the oracle to mark the target state
+    diffusion = GroversSearch._diffusion_operator(num_qubits) # Build the diffusion operator to amplify the marked state
+    simulator = AerSimulator(method='statevector') # Use the statevector simulator to get the final state of the quantum circuit
+
+    convergence = [] # List to store the convergence data (iteration number and probability)
+
+    for iter in range(0, max_iter + 1):
+        circuit = QuantumCircuit(num_qubits) # Create a new quantum circuit for each iteration
+        circuit.h(range(num_qubits)) # Apply Hadamard gates to all qubits to create a superposition of all states
+
+        for _ in range(num_qubits):
+            circuit.append(oracle.to_gate(), range(num_qubits)) # Append the oracle to the circuit
+            circuit.append(diffusion.to_gate(), range(num_qubits)) # Append the diffusion operator
+        circuit.save_statevector() # Save the statevector at the end of the circuit
+
+        sv_job = simulator.run(circuit)
+        sv = np.asarray(sv_job.result().get_statevector(circuit)) # Get the final statevector from the simulation
+        target_index = int(target_state, 2) # Convert the target state from binary string to integer index
+        probability = float(abs( math.pow(sv[target_index], 2) )) # Calculate the probability of finding the target state from the statevector
+
+        convergence.append((iter, probability)) # Append the iteration number and probability to the convergence list
+
+    return convergence
