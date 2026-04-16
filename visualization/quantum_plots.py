@@ -237,8 +237,7 @@ def plot_comparison_bars(metrics_list) -> Figure:
     1. Left panel: Path Length per algorithm
     2. Right panel: Time (ms) per algorithm
  
-    Parameters
-    ----------
+    Parameters:
     metrics_list : list of Algorithm Metrics
     """
     names = [metric.name for metric in metrics_list]
