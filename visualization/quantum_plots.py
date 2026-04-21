@@ -11,14 +11,14 @@ from matplotlib.figure import Figure
 
 # Colour variants defined here
 COLORS = {
-    'bfs':     '#29b6f6',
-    'astar':   '#ffca28',
-    'quantum': '#ce93d8',
-    'target':  '#ff1744',
-    'bg':      '#0f0e17',
-    'panel':   '#1a1a2e',
-    'text':    '#fffffe',
-    'grid':    '#2d2d44',
+    'bfs': '#38bdf8',
+    'astar': '#fbbf24',
+    'quantum': '#c084fc',
+    'target': '#fb7185',
+    'bg': '#08111f',
+    'panel': '#0f172a',
+    'text': '#f8fafc',
+    'grid': '#243044',
 }
 
 def _dark_theme(ax, fig):
@@ -47,13 +47,13 @@ def plot_circuit(Circuit) -> Optional[Figure]:
             output = 'mpl',
             style = {
                 'backgroundcolor': COLORS['bg'],
-                'textcolor':       COLORS['text'],
-                'gatetextcolor':   '#ffffff',
-                'subtextcolor':    '#aaaaaa',
-                'linecolor':       '#7986cb',
-                'creglinecolor':   '#ce93d8',
-                'gatefacecolor':   '#3949ab',
-                'barrierfacecolor':'#4a4a6a',
+                'textcolor': COLORS['text'],
+                'gatetextcolor': '#ffffff',
+                'subtextcolor':'#aaaaaa',
+                'linecolor': '#7c9cff',
+                'creglinecolor':'#c084fc',
+                'gatefacecolor':'#1d4ed8',
+                'barrierfacecolor':'#334155',
                 'fold': 25,
             },
             fold = 25,
@@ -193,10 +193,10 @@ def plot_grover_convergence(convergence: List[Tuple[int, float]], optimal_k: int
     # Main probability curve
     ax.plot(iterations, probabilities, color = COLORS['quantum'], linewidth = 2.5, marker = 'o', markersize = 5, label = 'P(target state)')
  
-    # Shade the "amplification" region
+    # Shading the "amplification" region
     ax.fill_between(iterations, probabilities, alpha = 0.15, color = COLORS['quantum'])
  
-    # Mark the optimal iteration with a vertical dashed line
+    # Marking the optimal iteration with a vertical dashed line
     ax.axvline(x = optimal_k, color = COLORS['target'], linestyle = '--', linewidth = 1.5, label = f'Optimal k = {optimal_k}')
  
     # Mark peak probability
@@ -213,7 +213,7 @@ def plot_grover_convergence(convergence: List[Tuple[int, float]], optimal_k: int
     if len(probabilities) > 0:
         num_states = 2 ** math.ceil(math.log2(max(1, len(probabilities))))
         classical_probability = 1.0 / num_states if num_states > 0 else 0
-        ax.axhline(y = classical_probability, color = '#aaaaaa', linestyle = ':', linewidth = 1, label = f'Classical baseline (1/N = {classical_probability:.4f})')
+        ax.axhline(y = classical_probability, color = '#a5b4fc', linestyle = ':', linewidth = 1, label = f'Classical baseline (1/N = {classical_probability:.4f})')
  
     ax.set_xlabel('Grover Iteration (k)', color  =COLORS['text'])
     ax.set_ylabel('P(target) - Probability of Finding Goal', color = COLORS['text'])
@@ -242,7 +242,7 @@ def plot_comparison_bars(metrics_list) -> Figure:
     """
     names = [metric.name for metric in metrics_list]
     path_lengths = [metric.path_length if metric.path_found else 0 for metric in metrics_list]
-    times_ms = [metric.time_ms for metric in metrics_list]
+    times_ms = [metric.time for metric in metrics_list]
     nodes_exp = [metric.nodes_explored for metric in metrics_list]
     colors = [COLORS['bfs'], COLORS['astar'], COLORS['quantum']]
  
