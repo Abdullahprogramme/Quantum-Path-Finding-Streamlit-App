@@ -15,6 +15,7 @@ class GroversSearch:
     def __init__(self, path: Optional[List[Cell]], nodes_explored: int, time_taken: float, num_qubits: int, num_iterations: int, probabilities: Dict[str, float], found_state: Optional[str], circuit_diagram: Optional[object]):
         
         self.path = path # The path found by Grover's algorithm, represented as a list of cells (row, column)
+        self.path_length = len(path) if path else 0 # Keep parity with BFS/A* result objects
         self.nodes_explored = nodes_explored # The number of nodes explored during the search
         self.time_taken = time_taken # The time taken to execute the search in seconds
         self.num_qubits = num_qubits # The number of qubits used in the quantum circuit for Grover's algorithm
@@ -128,9 +129,10 @@ class GroversSearch:
                     path.append(current) # Add the current cell to the path
                     current = parent_map[current] # Move to the parent cell
 
-                return path.reverse() # Reverse the path to get it from start to target
+                path.reverse() # Reverse the path to get it from start to target
+                return path
 
-            for neighbor in grid_manager.get_neighbors(current):
+            for neighbor in grid_manager.neighbors(current):
                 if neighbor not in parent_map: # If the neighbor has not been visited
                     parent_map[neighbor] = current # Set the parent of the neighbor to the current cell
                     queue.append(neighbor) # Add the neighbor to the queue for further exploration
@@ -161,7 +163,7 @@ def grovers_search(grid_manager: GridManager, encoder: Encoder) -> GroversSearch
     """
 
     start = grid_manager.start
-    target = grid_manager.target
+    target = grid_manager.end
 
     time_start = time.time() # Start the timer to measure execution time
 
@@ -190,8 +192,8 @@ def grovers_search(grid_manager: GridManager, encoder: Encoder) -> GroversSearch
     diffusion = GroversSearch._diffusion_operator(num_qubits) # Build the diffusion operator to amplify the marked state
 
     for iter in range(number_of_iterations):
-        circuit.append(oracle.to_gate(), range(num_qubits)) # Append the oracle to the circuit
-        circuit.append(diffusion.to_gate(), range(num_qubits)) # Append the diffusion operator to
+        circuit.compose(oracle, qubits = range(num_qubits), inplace = True) # Inline oracle instructions for Aer compatibility
+        circuit.compose(diffusion, qubits = range(num_qubits), inplace = True) # Inline diffusion instructions for Aer compatibility
 
         if iter < number_of_iterations - 1:
             circuit.barrier() # Add a barrier between iterations for better visualization
@@ -206,22 +208,22 @@ def grovers_search(grid_manager: GridManager, encoder: Encoder) -> GroversSearch
     qc_no_measure = QuantumCircuit(num_qubits) # Create a copy of the circuit without measurement for statevector simulation
     qc_no_measure.h(range(num_qubits)) # Apply Hadamard gates to all qubits
     for iter in range(number_of_iterations):
-        qc_no_measure.append(oracle.to_gate(), range(num_qubits)) # Append the oracle to the circuit
-        qc_no_measure.append(diffusion.to_gate(), range(num_qubits)) # Append the diffusion operator
+        qc_no_measure.compose(oracle, qubits = range(num_qubits), inplace = True) # Inline oracle instructions for Aer compatibility
+        qc_no_measure.compose(diffusion, qubits = range(num_qubits), inplace = True) # Inline diffusion instructions for Aer compatibility
 
     simulator = AerSimulator(method='statevector') # Use the statevector simulator to get the final state of the quantum circuit
     qc_simulator = qc_no_measure.copy() # Copy the circuit without measurement for simulation
     qc_simulator.save_statevector() # Save the statevector at the end of the circuit
 
-    sv_job    = simulator.run(qc_simulator)
+    sv_job = simulator.run(qc_simulator)
     sv_result = sv_job.result()
-    state_vector  = np.asarray(sv_result.get_statevector(qc_simulator)) # Get the final statevector from the simulation
+    state_vector = np.asarray(sv_result.get_statevector(qc_simulator)) # Get the final statevector from the simulation
 
     # Compute probabilities for all basis states
     probabilities: Dict[str, float] = {}
     for idx in range(num_states):
         basis_string = format(idx, f'0{num_qubits}b')
-        probabilities[basis_string] = float(abs( math.pow(state_vector[idx], 2) )) # Calculate the probability of each basis state from the statevector
+        probabilities[basis_string] = float(abs(state_vector[idx]) ** 2) # Calculate the probability of each basis state from the statevector
  
     # Run measurement circuit to get the most likely outcome
     shot_simulator = AerSimulator().run(circuit, shots = 1024)
@@ -238,9 +240,9 @@ def grovers_search(grid_manager: GridManager, encoder: Encoder) -> GroversSearch
         if grid_manager.is_not_obstacle(decoded_cell):
             quantum_goal = decoded_cell
         else:
-            quantum_goal = target   # fallback to actual target if decode lands on obstacle
+            quantum_goal = target # fallback to actual target if decode lands on obstacle
     else:
-        quantum_goal = target       # fallback if index out of range
+        quantum_goal = target # fallback if index out of range
 
     # Step 7: Reconstruct the path from the start cell to the target cell using a breadth-first search (BFS) for path reconstruction
 
@@ -278,7 +280,7 @@ def convergence(num_qubits: int, target_state: str) -> List[Tuple[int, float]]:
 
     oracle = GroversSearch._oracle_builder(num_qubits, target_state) # Build the oracle to mark the target state
     diffusion = GroversSearch._diffusion_operator(num_qubits) # Build the diffusion operator to amplify the marked state
-    simulator = AerSimulator(method='statevector') # Use the statevector simulator to get the final state of the quantum circuit
+    simulator = AerSimulator(method ='statevector') # Use the statevector simulator to get the final state of the quantum circuit
 
     convergence = [] # List to store the convergence data (iteration number and probability)
 
@@ -286,15 +288,15 @@ def convergence(num_qubits: int, target_state: str) -> List[Tuple[int, float]]:
         circuit = QuantumCircuit(num_qubits) # Create a new quantum circuit for each iteration
         circuit.h(range(num_qubits)) # Apply Hadamard gates to all qubits to create a superposition of all states
 
-        for _ in range(num_qubits):
-            circuit.append(oracle.to_gate(), range(num_qubits)) # Append the oracle to the circuit
-            circuit.append(diffusion.to_gate(), range(num_qubits)) # Append the diffusion operator
+        for _ in range(iter):
+            circuit.compose(oracle, qubits = range(num_qubits), inplace = True) # Inline oracle instructions for Aer compatibility
+            circuit.compose(diffusion, qubits = range(num_qubits), inplace = True) # Inline diffusion instructions for Aer compatibility
         circuit.save_statevector() # Save the statevector at the end of the circuit
 
         sv_job = simulator.run(circuit)
         sv = np.asarray(sv_job.result().get_statevector(circuit)) # Get the final statevector from the simulation
         target_index = int(target_state, 2) # Convert the target state from binary string to integer index
-        probability = float(abs( math.pow(sv[target_index], 2) )) # Calculate the probability of finding the target state from the statevector
+        probability = float(abs(sv[target_index]) ** 2) # Calculate the probability of finding the target state from the statevector
 
         convergence.append((iter, probability)) # Append the iteration number and probability to the convergence list
 
