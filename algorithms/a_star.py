@@ -52,7 +52,7 @@ def a_star(grid_manager: GridManager) -> AStar_Result:
 
     counter: int = 0 # Counter to break ties in the heap
     h_start = heuristic(start, end)
-    heap = List[Tuple] = []
+    heap: List[Tuple[float, int, Cell]] = []
     heapq.heappush(heap, (h_start, counter, start)) # (f_cost, counter, cell) 
     nodes_explored = 0
 
