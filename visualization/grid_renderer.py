@@ -3,13 +3,13 @@ from grid.grid_manager import Grid2D, Cell
 
 # Colours for each cell type
 CELL_STYLES = {
-    'empty': ('white','#e8eaf6'), # background, border
-    'obstacle': ('#1a1a2e', '#1a1a2e'),
-    'start': ('#00c853', '#00a844'),
-    'end': ('#ff1744', '#d50032'),
-    'path_bfs': ('#29b6f6', '#039be5'),
-    'path_astar': ('#ffca28', '#f9a825'),
-    'path_quantum': ('#ce93d8', '#ab47bc')
+    'empty': ('#2a3142', '#46516a'),
+    'obstacle': ('#141927', '#0f172a'),
+    'start': ('#10b981', '#059669'),
+    'end': ('#fb7185', '#e11d48'),
+    'path_bfs': ('#7dd3fc', '#0ea5e9'),
+    'path_astar': ('#fde68a', '#f59e0b'),
+    'path_quantum': ('#d8b4fe', '#a855f7')
 }
 
 # Labels for each cell type (can be empty for no text)
@@ -19,12 +19,12 @@ CELL_LABELS = {
 }
 
 LEGEND = {
-    'Start': '#00c853',
-    'End': '#ff1744',
-    'Obstacle': '#1a1a2e',
-    'BFS Path': '#29b6f6',
-    'A* Path': '#ffca28',
-    "Grover's Path": '#ce93d8'
+    'Start': '#10b981',
+    'End': '#fb7185',
+    'Obstacle': '#141927',
+    'BFS Path': '#7dd3fc',
+    'A* Path': '#fde68a',
+    "Grover's Path": '#d8b4fe'
 }
 
 def render_grid(grid: Grid2D, cell_size: int = 32) -> str:
@@ -44,21 +44,29 @@ def render_grid(grid: Grid2D, cell_size: int = 32) -> str:
     # CSS
     css = f"""
     <style>
-      .qnav-grid {{
-        border-collapse: collapse;
-        margin: 0 auto;
-        font-family: 'Courier New', monospace;
-      }}
-      .qnav-grid td {{
-        width:  {cell_size}px;
-        height: {cell_size}px;
-        text-align: center;
-        vertical-align: middle;
-        font-size: {max(8, cell_size // 3)}px;
-        font-weight: bold;
-        border: 1px solid #c5cae9;
-        transition: background-color 0.3s ease;
-      }}
+        .qnav-grid {{
+            border-collapse: separate;
+            border-spacing: 1px;
+            margin: 0 auto;
+            font-family: 'Inter', sans-serif;
+        }}
+        .qnav-grid td {{
+            width: {cell_size}px;
+            height: {cell_size}px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: {max(10, cell_size // 3)}px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            border: none;
+            border-radius: 10px;
+            transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 16px rgba(0,0,0,0.18);
+        }}
+        .qnav-grid td:hover {{
+            transform: translateY(-1px) scale(1.01);
+            filter: brightness(1.05);
+        }}
     </style>
     """
 
@@ -68,11 +76,14 @@ def render_grid(grid: Grid2D, cell_size: int = 32) -> str:
         cells_html = []
 
         for cell_type in row:
-            bg, border = CELL_STYLES.get(cell_type, ('#ffffff', '#e8eaf6'))
+            bg, border = CELL_STYLES.get(cell_type, ('rgba(255,255,255,0.04)', 'rgba(148,163,184,0.16)'))
             label = CELL_LABELS.get(cell_type, '')
-            text_color = '#ffffff' if cell_type in ('obstacle', 'end', 'start') else '#1a1a2e'
+            text_color = '#ffffff' if cell_type in ('obstacle', 'end', 'start') else '#e2e8f0'
+            extra_style = ''
+            if cell_type.startswith('path_'):
+                extra_style = 'box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 0 0 2px rgba(255,255,255,0.08), 0 0 18px rgba(124,156,255,0.28); font-weight: 900;'
             cells_html.append(
-                f'<td style="background:{bg}; border-color:{border}; color:{text_color};">'
+                f'<td style="background:{bg}; border-color:{border}; color:{text_color}; {extra_style}">'
                 f'{label}</td>'
             )
 
@@ -95,18 +106,20 @@ def render_legend() -> str:
 
     items = []
     for label, color in LEGEND.items():
-        text_col = '#ffffff' if label in ('End', 'Obstacle') else '#1a1a2e'
+        text_col = '#ffffff' if label in ('End', 'Obstacle') else '#08111f'
 
         items.append(
             f'<span style="'
             f'background:{color}; color:{text_col}; '
-            f'padding:3px 10px; border-radius:4px; '
-            f'margin:3px; font-size:12px; font-weight:bold; '
-            f'display:inline-block;">'
+            f'padding:7px 12px; border-radius:999px; '
+            f'margin:4px; font-size:12px; font-weight:800; '
+            f'border: 1px solid rgba(255,255,255,0.14); '
+            f'display:inline-flex; align-items:center; gap:6px; '
+            f'box-shadow: 0 10px 20px rgba(0,0,0,0.16);">'
             f'{label}</span>'
         )
 
-    return '<div style="text-align:center; margin:8px 0;">' + ''.join(items) + '</div>'
+    return '<div style="text-align:center; margin:10px 0 4px;">' + ''.join(items) + '</div>'
 
 def compute_cell_size(n: int, max_width: int = 680) -> int:
     """
