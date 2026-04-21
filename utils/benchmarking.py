@@ -170,3 +170,4 @@ def complexity_note(n: int) -> dict:
     #     "Grover's": sp.latex(sp.O(sp.sqrt(N**2))),
     #     "Quantum speedup": sp.latex(sp.sqrt(N**2))
     # }
+    
