@@ -14,7 +14,7 @@ from grid.grid_manager import GridManager, Cell
 class Encoder:
     def __init__(self, grid_manager: GridManager):
         self.grid = grid_manager
-        self.n = grid_manager.size
+        self.n = grid_manager.n
 
         total_cells = grid_manager.total_cells()
 
