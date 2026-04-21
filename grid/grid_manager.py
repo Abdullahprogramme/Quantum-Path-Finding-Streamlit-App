@@ -13,7 +13,7 @@ import random as r
 
 # Defining the constant variables to be used in the grid
 Cell = Tuple[int, int] # A cell is represented as a tuple of (row, column)
-Grid = List[List[str]] # A grid is a 2D list of strings representing the cell types
+Grid2D = List[List[str]] # A grid is a 2D list of strings representing the cell types
 
 EMPTY = "empty"
 OBSTACLE = "obstacle"   
@@ -38,19 +38,19 @@ class GridManager:
         self.random_seed = random_seed
         
         # Create the empty grid
-        self.grid: Grid = self._create_grid(n)
+        self.grid: Grid2D = self._create_grid(n)
 
         # Place the start and end points
         self.start: Cell = (0, 0)
         self.end: Cell = (n - 1, n - 1)
-        self.grid[self.start[0]][self.start[1]] = START
-        self.grid[self.end[0]][self.end[1]] = END
+        self.set_start(self.start)
+        self.set_end(self.end)
 
         # Place the obstacles
         self._place_obstacles(obstacle_percentage, random_seed)
 
     @staticmethod
-    def _create_grid(n: int) -> Grid:
+    def _create_grid(n: int) -> Grid2D:
         """Creates an n x n grid filled with empty cells."""
         return [[EMPTY for _ in range(n)] for _ in range(n)]
     
@@ -73,9 +73,8 @@ class GridManager:
             if placed >= num_obstacles:
                 break
 
-            row, col = cell
-            self.grid[row][col] = OBSTACLE
-            placed += 1
+            if self.set_obstacle(cell, max_obstacles = num_obstacles):
+                placed += 1
 
     def total_cells(self) -> int:
         """Total number of cells in the grid."""
@@ -91,7 +90,7 @@ class GridManager:
             (row - 1, col), # Up
             (row + 1, col), # Down
             (row, col - 1), # Left
-            (row, col + 1)  # Right
+            (row, col + 1) # Right
         ]
 
         valid_neighbors = []
@@ -106,6 +105,99 @@ class GridManager:
         
         row, col = cell
         return self.grid[row][col] != OBSTACLE
+
+    def get_cell_value(self, cell: Cell) -> str:
+        """Returns the raw cell value for a given cell."""
+
+        row, col = cell
+        return self.grid[row][col]
+
+    def set_cell_value(self, cell: Cell, value: str) -> None:
+        """Sets the raw cell value for a given cell."""
+
+        row, col = cell
+        self.grid[row][col] = value
+
+    def clear_cell(self, cell: Cell) -> None:
+        """Clears a cell unless it is the current start or end."""
+
+        if cell == self.start:
+            self.start = (-1, -1)
+        if cell == self.end:
+            self.end = (-1, -1)
+        self.set_cell_value(cell, EMPTY)
+
+    def set_start(self, cell: Cell) -> bool:
+        """Moves the start cell to a new position."""
+
+        if cell == self.end:
+            return False
+
+        if hasattr(self, 'start') and self.start != (-1, -1):
+            self.set_cell_value(self.start, EMPTY)
+
+        self.start = cell
+        self.set_cell_value(cell, START)
+        return True
+
+    def set_end(self, cell: Cell) -> bool:
+        """Moves the end cell to a new position."""
+
+        if cell == self.start:
+            return False
+
+        if hasattr(self, 'end') and self.end != (-1, -1):
+            self.set_cell_value(self.end, EMPTY)
+
+        self.end = cell
+        self.set_cell_value(cell, END)
+        return True
+
+    def obstacle_count(self) -> int:
+        """Returns the number of obstacle cells."""
+
+        return len(self.get_all_obstacle_cells())
+
+    def max_obstacles(self) -> int:
+        """Returns the obstacle cap implied by the configured density."""
+
+        return int(self.total_cells() * self.obstacle_percentage)
+
+    def can_add_obstacle(self, cell: Cell, max_obstacles: int | None = None) -> bool:
+        """Checks whether an obstacle can be placed at the specified cell."""
+
+        if cell in (self.start, self.end):
+            return False
+
+        if self.grid[cell[0]][cell[1]] == OBSTACLE:
+            return True
+
+        limit = self.max_obstacles() if max_obstacles is None else max_obstacles
+        return self.obstacle_count() < limit
+
+    def set_obstacle(self, cell: Cell, max_obstacles: int | None = None) -> bool:
+        """Places an obstacle if allowed by the obstacle cap."""
+
+        if cell in (self.start, self.end):
+            return False
+
+        if self.grid[cell[0]][cell[1]] == OBSTACLE:
+            return True
+
+        if not self.can_add_obstacle(cell, max_obstacles = max_obstacles):
+            return False
+
+        self.set_cell_value(cell, OBSTACLE)
+        return True
+
+    def remove_obstacle(self, cell: Cell) -> bool:
+        """Removes an obstacle from a cell."""
+
+        if self.grid[cell[0]][cell[1]] != OBSTACLE:
+            return False
+
+        self.set_cell_value(cell, EMPTY)
+        return True
     
     def get_all_non_obstacle_cells(self) -> List[Cell]:
         """Returns a set of all cells that are not obstacles."""
@@ -117,6 +209,11 @@ class GridManager:
                     non_obstacle_cells.append((row, col))
 
         return non_obstacle_cells
+
+    def get_obstacle_cells(self) -> Set[Cell]:
+        """Compatibility alias for obstacle cell retrieval."""
+
+        return self.get_all_obstacle_cells()
     
     def get_all_obstacle_cells(self) -> Set[Cell]:
         """Returns a set of all cells that are obstacles."""
@@ -142,11 +239,11 @@ class GridManager:
         col = index % self.n
         return (row, col)
     
-    def path_highlight(self, path: List[Cell], label: str) -> Grid:
+    def path_highlight(self, path: List[Cell], label: str) -> Grid2D:
         """Highlights the cells in the given path by marking them as 'label'."""
 
         # Make a new copy of the original grid to avoid modifying it
-        highlighted_grid: Grid = [row.copy() for row in self.grid]
+        highlighted_grid: Grid2D = [row.copy() for row in self.grid]
 
         for cell in path:
             row, col = cell
@@ -155,7 +252,7 @@ class GridManager:
 
         return highlighted_grid
     
-    def merge_paths(self, paths: dict) -> Grid:
+    def merge_paths(self, paths: dict) -> Grid2D:
         """
         Merges multiple paths into a single grid, highlighting each path with its respective label.
 
@@ -164,7 +261,7 @@ class GridManager:
         """
 
         # Start with a copy of the original grid
-        merged_grid: Grid = [row.copy() for row in self.grid]
+        merged_grid: Grid2D = [row.copy() for row in self.grid]
 
         for label, path in paths.items():
             if path is not None:
