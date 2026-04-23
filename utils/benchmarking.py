@@ -3,7 +3,6 @@ from typing import Optional, List
 from grid.grid_manager import Cell
 
 import emoji
-import math
 import sympy as sp
 
 
@@ -150,18 +149,19 @@ def complexity_note(n: int) -> dict:
     Return theoretical complexity strings for an N x N grid.
     """
 
-    total = math.pow(n, 2)
+    total = float(sp.N(sp.Integer(n) ** 2))
+    sqrt_total = int(sp.sqrt(total))
     return {
         "Grid size": f"{n} x {n} = {total} cells",
         "BFS (worst case)": f"O({total}) = O(N²)",
         "A* (with heuristic)": f"O({total} x log {total}) typically much less",
         "Grover's": f"O(√{total}) = O(√(N²)) = O(N) oracle calls",
-        "Quantum speedup": f"√{total} ≈ {int(math.pow(total, 0.5))} oracle calls vs {total} classical",
+        "Quantum speedup": f"√{total} ≈ {sqrt_total} oracle calls vs {total} classical",
     }
 
     # N = sp.Symbol('N')
 
-    # total = math.pow(n, 2)
+    # total = sp.Integer(n) ** 2
 
     # return {
     #     "Grid size": sp.latex(N**2),
