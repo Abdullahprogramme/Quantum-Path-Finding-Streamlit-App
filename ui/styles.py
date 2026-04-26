@@ -72,19 +72,15 @@ GLOBAL_CSS = """
         color: var(--text) !important;
     }
 
+    /* Keep sidebar sliders visually close to Streamlit defaults */
     section[data-testid="stSidebar"] [data-testid="stSlider"] [role="slider"] {
-        background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
-        border: 3px solid #050814 !important;
-        box-shadow: 0 0 0 6px rgba(124, 156, 255, 0.14);
+        box-shadow: none !important;
     }
 
-    section[data-testid="stSidebar"] [data-testid="stSlider"] [data-baseweb="slider"] > div {
-        background: rgba(148, 163, 184, 0.28);
-    }
-
-    section[data-testid="stSidebar"] [data-testid="stSlider"] svg,
-    section[data-testid="stSidebar"] [data-testid="stSlider"] path {
-        color: var(--text) !important;
+    /* Use a neutral tone for slider help icons instead of white */
+    section[data-testid="stSidebar"] [data-testid="stSlider"] [data-testid="stWidgetLabelHelp"] svg,
+    section[data-testid="stSidebar"] [data-testid="stSlider"] [data-testid="stWidgetLabelHelp"] path {
+        color: #94a3b8 !important;
         fill: currentColor !important;
         stroke: currentColor !important;
     }
