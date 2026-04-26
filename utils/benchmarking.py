@@ -154,7 +154,7 @@ def complexity_note(n: int) -> dict:
     return {
         "Grid size": f"{n} x {n} = {total} cells",
         "BFS (worst case)": f"O({total}) = O(N²)",
-        "A* (with heuristic)": f"O({total} x log {total}) typically much less",
+        "A*  ": f"O({total} x log {total}) typically much less",
         "Grover's": f"O(√{total}) = O(√(N²)) = O(N) oracle calls",
         "Quantum speedup": f"√{total} ≈ {sqrt_total} oracle calls vs {total} classical",
     }
