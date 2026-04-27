@@ -5,11 +5,12 @@ from grid.grid_manager import Grid2D, Cell
 CELL_STYLES = {
     'empty': ('#2a3142', '#46516a'),
     'obstacle': ('#141927', '#0f172a'),
-    'start': ('#10b981', '#059669'),
+    'start': ('#60a5fa', '#3b82f6'),
     'end': ('#fb7185', '#e11d48'),
     'path_bfs': ('#7dd3fc', '#0ea5e9'),
     'path_astar': ('#fde68a', '#f59e0b'),
-    'path_quantum': ('#d8b4fe', '#a855f7')
+    'path_quantum': ('#d8b4fe', '#a855f7'),
+    'path_overlap': ('#fbcfe8', '#ec4899')
 }
 
 # Labels for each cell type (can be empty for no text)
@@ -19,12 +20,13 @@ CELL_LABELS = {
 }
 
 LEGEND = {
-    'Start': '#10b981',
+    'Start': '#60a5fa',
     'End': '#fb7185',
     'Obstacle': '#141927',
     'BFS Path': '#7dd3fc',
     'A* Path': '#fde68a',
-    "Grover's Path": '#d8b4fe'
+    "Grover's Path": '#d8b4fe',
+    'Path Overlap': '#fbcfe8'
 }
 
 def render_grid(grid: Grid2D, cell_size: int = 32) -> str:
