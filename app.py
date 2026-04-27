@@ -56,7 +56,7 @@ with st.sidebar:
     st.markdown("*Three Minds, One Maze*")
     st.divider()
 
-    st.markdown(emoji.emojize(":gear:") + " Grid Settings")
+    st.markdown(f"Grid Settings")
 
     n_val = st.slider(
         f"Grid Size ({sp.latex(sp.Symbol('N'))} x {sp.latex(sp.Symbol('N'))})",
@@ -66,7 +66,7 @@ with st.sidebar:
         step = 1,
         help = (
             "N controls the maze size. Larger N = more cells.\n\n" +
-            emoji.emojize(":warning:") + " For the quantum simulation: N > 12 may be slow "
+            f"WARNING: For the quantum simulation: N > 12 may be slow "
             "because qubit count = ceil(log2(N²))."
         ),
     )
@@ -91,14 +91,14 @@ with st.sidebar:
     )
 
     st.divider()
-    st.markdown(emoji.emojize(":bar_chart:") + " Visualisation Options")
+    st.markdown(f"Visualisation Options")
 
     show_circuit = st.checkbox("Show Quantum Circuit Diagram", value = st.session_state['show_circuit'])
     show_histogram = st.checkbox("Show Probability Histogram", value = st.session_state['show_histogram'])
     show_convergence = st.checkbox("Show Convergence Plot", value = st.session_state['show_convergence'])
 
     st.divider()
-    st.markdown(emoji.emojize(":pencil:") + " Grid Placement Mode")
+    st.markdown(f"Grid Placement Mode")
     placement_tool = st.selectbox(
         "Tool",
         ["Start", "End", "Obstacle", "Erase"],
@@ -125,7 +125,7 @@ with st.sidebar:
     st.divider()
 
     # Apply Settings button
-    if st.button(emoji.emojize(":gear:") + " Apply Settings & Build Grid"):
+    if st.button(f"Apply Settings & Build Grid"):
         # Persist settings
         st.session_state['n'] = n_val
         st.session_state['obstacle_pct'] = obs_pct / 100.0
@@ -147,7 +147,7 @@ with st.sidebar:
         st.success("Grid built! Click **Run Algorithms** to start.")
 
     # Run Algorithms button
-    if st.button(emoji.emojize(":rocket:") + " Run All Algorithms"):
+    if st.button(f"Run All Algorithms"):
         if st.session_state['grid_manager'] is None:
             st.warning("Build the grid first using **Apply Settings**.")
         else:
@@ -175,7 +175,7 @@ with st.sidebar:
     # Encoding info
     if st.session_state['encoder'] is not None:
         enc = st.session_state['encoder']
-        st.markdown("### " + emoji.emojize(":input_numbers:") + " Quantum Encoding Info")
+        st.markdown("### Quantum Encoding Info")
         st.markdown(f"""
 <div class="info-box">
   <b>Grid Cells:</b> {enc.grid.total_cells()}<br>
@@ -234,7 +234,7 @@ if st.session_state['grid_manager'] is None:
     st.markdown('<div class="section-label">Start Here</div>', unsafe_allow_html=True)
     st.markdown(f"""
 <div class="surface-card" style="text-align:center; padding:56px 24px; margin-bottom: 1.2rem;">
-    <h3 style="margin-top:0;">{emoji.emojize(":backhand_index_pointing_left:")} Configure and Build the Grid</h3>
+    <h3 style="margin-top:0;">Configure and Build the Grid</h3>
     <p style="color: var(--muted); font-size:14px; max-width: 720px; margin: 0.6rem auto 0; line-height: 1.7;">
     Use the sidebar to set grid size, obstacle density, and seed.<br>
     Click <b>Apply Settings & Build Grid</b>, then <b>Run All Algorithms</b>.
@@ -295,11 +295,11 @@ else:
 
         status_msg = ""
         if bfs_r and not bfs_r.found_path():
-            status_msg += emoji.emojize(":warning:") + " BFS: No path found.  "
+            status_msg += f"WARNING -> BFS: No path found.  "
         if astar_r and not astar_r.found_path():
-            status_msg += emoji.emojize(":warning:") + " A*: No path found.  "
+            status_msg += f"WARNING -> A*: No path found.  "
         if grover_r and not grover_r.found():
-            status_msg += emoji.emojize(":warning:") + " Grover's: No path found."
+            status_msg += f"WARNING -> Grover's: No path found."
         if status_msg:
             st.warning(status_msg)
     else:
@@ -347,7 +347,7 @@ if st.session_state['results_ready']:
     all_metrics = [bfs_metrics, astar_metrics, grover_metrics]
 
     # Top-level metric cards 
-    st.markdown("## " + emoji.emojize(":bar_chart:") + " Benchmark Results")
+    st.markdown("## Benchmark Results")
     mc1, mc2, mc3 = st.columns(3)
     for col, m, color in zip(
         [mc1, mc2, mc3],
@@ -364,14 +364,14 @@ if st.session_state['results_ready']:
     st.divider()
 
     # Detailed comparison table 
-    st.markdown("### " + emoji.emojize(":clipboard:") + " Detailed Comparison Table")
+    st.markdown("### Detailed Comparison Table")
     import pandas as pd
     comparison_rows = build_comparison_table(all_metrics)
     df = pd.DataFrame(comparison_rows)
     st.dataframe(df, use_container_width = True, hide_index = True)
 
     # Theoretical complexity note
-    with st.expander(emoji.emojize(":books:") + " Theoretical Complexity Notes"):
+    with st.expander(f"Theoretical Complexity Notes"):
         notes = complexity_note(gm.n)
         for k, v in notes.items():
             st.markdown(f"**{k}:** {v}")
@@ -403,16 +403,16 @@ This is just a simulation.
     # MATPLOTLIB VISUALISATIONS
     # =============================
 
-    st.markdown("## " + emoji.emojize(":microscope:") + " Quantum Visualisations")
+    st.markdown("## Quantum Visualisations")
 
     # Comparison bars 
-    st.markdown("### " + emoji.emojize(":bar_chart:") + " Performance Comparison")
+    st.markdown("### Performance Comparison")
     fig_bars = plot_comparison_bars(all_metrics)
     st.pyplot(fig_bars, use_container_width = True)
 
     # Probability histogram
     if st.session_state['show_histogram']:
-        st.markdown("### " + emoji.emojize(":bar_chart:") + " Quantum State Probability Histogram")
+        st.markdown("### Quantum State Probability Histogram")
         st.markdown(
             "<div class='info-box'>"
             "<b>Probabilistic Reasoning:</b> After Grover's amplitude amplification, "
@@ -434,7 +434,7 @@ This is just a simulation.
 
     # Convergence plot
     if st.session_state['show_convergence']:
-        st.markdown("### " + emoji.emojize(":chart_with_upwards_trend:") + " Grover's Convergence (Amplitude Amplification)")
+        st.markdown("### Grover's Convergence (Amplitude Amplification)")
         st.markdown(
             "<div class='info-box'>"
             "<b>Local Search Analogy:</b> Just like simulated annealing or hill climbing "
@@ -455,7 +455,7 @@ This is just a simulation.
 
     # Quantum circuit diagram
     if st.session_state['show_circuit']:
-        st.markdown("### " + emoji.emojize(":atom_symbol:") + " Quantum Circuit Diagram")
+        st.markdown("### Quantum Circuit Diagram")
         st.markdown(
             "<div class='info-box'>"
             "<b>Reading the circuit:</b> Time flows left to right. "
@@ -474,7 +474,7 @@ This is just a simulation.
     st.divider()
 
     # AI Topics summary table
-    st.markdown("## " + emoji.emojize(":graduation_cap:") + " AI Course Topics Addressed")
+    st.markdown("## AI Course Topics Addressed")
     topics_data = {
         "Course Topic": [
             "Introduction & Search Problem",
