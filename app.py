@@ -81,6 +81,13 @@ with st.sidebar:
         help = "Percentage of grid cells that become impassable obstacles (CSP hard constraints).",
     )
 
+    grid_layout = st.selectbox(
+        "Grid Layout",
+        ["Random", "Diverse Paths"],
+        index = ["Random", "Diverse Paths"].index(st.session_state.get('grid_layout', 'Random')),
+        help = "Diverse Paths places a structured pattern that encourages multiple valid routes.",
+    )
+
     seed_val = st.number_input(
         "Random Seed",
         min_value = 0,
@@ -129,6 +136,7 @@ with st.sidebar:
         # Persist settings
         st.session_state['n'] = n_val
         st.session_state['obstacle_pct'] = obs_pct / 100.0
+        st.session_state['grid_layout'] = grid_layout
         st.session_state['seed'] = seed_val
         st.session_state['show_circuit'] = show_circuit
         st.session_state['show_histogram'] = show_histogram
@@ -140,6 +148,9 @@ with st.sidebar:
             obstacle_percentage = obs_pct / 100.0,
             random_seed = seed_val,
         )
+
+        if grid_layout == "Diverse Paths":
+            gm.apply_diverse_pattern()
 
         st.session_state['grid_manager'] = gm
         st.session_state['encoder'] = Encoder(gm)
@@ -389,7 +400,7 @@ This is just a simulation.
         """)
 
     # Extra info per algorithm 
-    with st.expander(emoji.emojize(":mag:") + " Algorithm Details"):
+    with st.expander(f"Algorithm Details"):
         d1, d2, d3 = st.columns(3)
         for col, m in zip([d1, d2, d3], all_metrics):
             with col:
