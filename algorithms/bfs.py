@@ -49,7 +49,7 @@ def bfs(grid_manager: GridManager) -> BFS_Result:
 
             return BFS_Result(path, time_taken, nodes_explored, visited)
         
-        for neighbor in grid_manager.neighbors(current_node):
+        for neighbor in grid_manager.neighbors_with_order(current_node, ('D', 'R', 'U', 'L')):
             if neighbor not in parent_map: # Not visited
                 visited.append(neighbor)
                 parent_map[neighbor] = current_node
