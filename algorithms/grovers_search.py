@@ -132,7 +132,7 @@ class GroversSearch:
                 path.reverse() # Reverse the path to get it from start to target
                 return path
 
-            for neighbor in grid_manager.neighbors(current):
+            for neighbor in grid_manager.neighbors_with_order(current, ('U', 'L', 'D', 'R')):
                 if neighbor not in parent_map: # If the neighbor has not been visited
                     parent_map[neighbor] = current # Set the parent of the neighbor to the current cell
                     queue.append(neighbor) # Add the neighbor to the queue for further exploration
