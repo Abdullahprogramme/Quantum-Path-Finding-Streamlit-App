@@ -74,7 +74,7 @@ def a_star(grid_manager: GridManager) -> AStar_Result:
 
             return AStar_Result(path, time_taken, nodes_explored, visited)
         
-        for neighbor in grid_manager.neighbors_with_order(current, ('U', 'D', 'L', 'R')):
+        for neighbor in grid_manager.neighbors_with_order(current, ('R', 'D', 'L', 'U')):
             if neighbor in closed_set:
                 continue
 
