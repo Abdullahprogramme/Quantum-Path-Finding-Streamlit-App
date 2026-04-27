@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional, List
 from grid.grid_manager import Cell
-
-import emoji
 import sympy as sp
 
 
@@ -61,7 +59,7 @@ class AlgorithmMetrics:
 
     @property
     def status_str(self) -> str:
-        return emoji.emojize(":check_mark: Found") if self.path_found else emoji.emojize(":cross_mark: No Path")
+        return f"SUCCESS: Found" if self.path_found else f"FAILURE: No Path"
 
 
 
