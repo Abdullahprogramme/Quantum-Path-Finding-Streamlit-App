@@ -99,6 +99,86 @@ class GridManager:
                 valid_neighbors.append((r, c))
 
         return valid_neighbors
+
+    def neighbors_with_order(self, cell: Cell, order: Tuple[str, str, str, str]) -> List[Cell]:
+        """Returns valid neighbors using a caller-provided direction order."""
+
+        row, col = cell
+        deltas = {
+            'U': (-1, 0),
+            'D': (1, 0),
+            'L': (0, -1),
+            'R': (0, 1),
+        }
+
+        valid_neighbors: List[Cell] = []
+        for direction in order:
+            if direction not in deltas:
+                continue
+
+            dr, dc = deltas[direction]
+            nr, nc = row + dr, col + dc
+            if 0 <= nr < self.n and 0 <= nc < self.n and self.grid[nr][nc] != OBSTACLE:
+                valid_neighbors.append((nr, nc))
+
+        return valid_neighbors
+
+    def apply_diverse_pattern(self) -> None:
+        """Builds a structured obstacle pattern that encourages multiple valid routes."""
+
+        # Reset to a clean board except start/end.
+        for row in range(self.n):
+            for col in range(self.n):
+                cell = (row, col)
+                if cell not in (self.start, self.end):
+                    self.set_cell_value(cell, EMPTY)
+
+        cap = self.max_obstacles()
+        if cap <= 0:
+            return
+
+        pattern_cells: List[Cell] = []
+
+        # Symmetric center block creates alternative shortest detours around it.
+        mid = self.n // 2
+        center_cells = {
+            (mid - 1, mid - 1),
+            (mid - 1, mid),
+            (mid, mid - 1),
+            (mid, mid),
+        }
+        
+        for cell in center_cells:
+            r, c = cell
+            if 0 <= r < self.n and 0 <= c < self.n and cell not in (self.start, self.end):
+                pattern_cells.append(cell)
+
+        # Add two symmetric side pillars with two gates to preserve multiple route choices.
+        left_col = max(1, self.n // 3)
+        right_col = min(self.n - 2, (2 * self.n) // 3)
+        gate_rows = {max(1, self.n // 3), min(self.n - 2, (2 * self.n) // 3)}
+
+        for row in range(1, self.n - 1):
+            if row not in gate_rows:
+                for col in (left_col, right_col):
+                    cell = (row, col)
+                    if cell not in (self.start, self.end):
+                        pattern_cells.append(cell)
+
+        # Keep order stable while deduplicating.
+        seen: Set[Cell] = set()
+        unique_cells: List[Cell] = []
+        for cell in pattern_cells:
+            if cell not in seen:
+                seen.add(cell)
+                unique_cells.append(cell)
+
+        placed = 0
+        for cell in unique_cells:
+            if placed >= cap:
+                break
+            if self.set_obstacle(cell, max_obstacles = cap):
+                placed += 1
     
     def is_not_obstacle(self, cell: Cell) -> bool:
         """Checks if a given cell is not an obstacle."""
@@ -269,7 +349,16 @@ class GridManager:
                 # if the path is not None, highlight it on the merged grid
                 for cell in path:
                     row, col = cell
-                    if merged_grid[row][col] not in (START, END): # Don't overwrite start and end points
+                    if merged_grid[row][col] in (START, END):
+                        continue
+
+                    current = merged_grid[row][col]
+                    if current == 'path_overlap':
+                        continue
+
+                    if isinstance(current, str) and current.startswith('path_') and current != label:
+                        merged_grid[row][col] = 'path_overlap'
+                    else:
                         merged_grid[row][col] = label
 
         return merged_grid
