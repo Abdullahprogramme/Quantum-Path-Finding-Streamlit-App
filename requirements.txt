@@ -3,7 +3,6 @@ qiskit >= 1.1.0
 qiskit-aer >= 0.14.2
 matplotlib >= 3.8.2
 numpy >= 1.26.1
-networkx >= 3.2.0
 emoji >= 2.15.0
 sympy >= 1.13.0
 pylatexenc >= 2.10
