@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Abdullah Tariq
+# Licensed under the MIT License. See LICENSE in the repo root.
+
 import time
 import math
 from typing import Optional, Tuple, List, Dict
